@@ -13,6 +13,3 @@ void LevelGenerator::populateTiles(char sym){
         }
     }
 }
-
-/*
-*/

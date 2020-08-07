@@ -7,15 +7,19 @@ void Camera::update(){
     getmaxyx(stdscr, height, width);
     int r = 0;
     for(int wr = m_y; wr < m_y + height; wr++){
-        std::string rowText;
+        int c = 0;
         for(int wc = m_x; wc < m_x + width; wc++){
             //check to make sure the current tile is in the world bounds otherwise just draw a blank tile
-            if(-1 < wr && wr < m_game->getHeight() && -1 < wc && wc < m_game->getWidth()) rowText += m_game->getWorld()[wr][wc].sym; 
-            else rowText += ' ';
+            Tile t; 
+            if(-1 < wr && wr < m_game->getHeight() && -1 < wc && wc < m_game->getWidth()) t = m_game->getWorld()[wr][wc]; 
+            else t = TileManager::floor;
+            attron(COLOR_PAIR(t.color));
+            mvaddch(r, c, t.sym);
+            c++;
         }
-        mvprintw(r, 0, rowText.c_str());
         r++;
     }
+    refresh();
 }
 
 void Camera::handleInput(int key){
@@ -34,6 +38,8 @@ void Camera::initRender(){
     cbreak();
     noecho();
     keypad(stdscr, true);
+
+    TileManager::initColors();
 }
 
 void Camera::destroyRender(){

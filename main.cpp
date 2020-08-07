@@ -28,9 +28,9 @@ int main(){
     
     nn.print();
 */
-    RoguelikeGame game = RoguelikeGame(91, 91);
-    //game.addEntity().addComponent(new Camera(&game));
-    game.addEntity().addComponent(new BasicDungeonGenerator(&game, 1001, 100, 4, 13));
+    RoguelikeGame game;
+    game.addEntity().addComponent(new Camera(&game));
+    game.addEntity().addComponent(new BasicDungeonGenerator(&game, 100, 50, 1001, 100, 4, 8));
     game.start();
 
     return 0;

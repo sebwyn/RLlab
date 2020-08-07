@@ -6,43 +6,37 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "LevelGenerator.hpp"
 #include "Component.hpp"
 #include "RoguelikeGame.hpp"
 
-class BasicDungeonGenerator : public LevelGenerator, public Component {
+class BasicDungeonGenerator : public Component {
 public:
-    BasicDungeonGenerator(int width, int height, int seed, int roomAttempts, int minRoomSize, int maxRoomSize) 
-     : LevelGenerator(width, height), m_attempts(roomAttempts), m_sizeDistribution(minRoomSize, maxRoomSize), m_colDistribution(0, width), m_rowDistribution(0, height) { 
-        generator.seed(seed);
-    }
-
-    BasicDungeonGenerator(RoguelikeGame* game, int seed, int roomAttempts, int minRoomSize, int maxRoomSize) 
-     : LevelGenerator(game->getWidth(), game->getHeight()), m_attempts(roomAttempts), m_sizeDistribution(minRoomSize, maxRoomSize), m_colDistribution(0, game->getWidth()), m_rowDistribution(0, game->getHeight()) { 
-        generator.seed(seed);
-        generate(game->getWorld());
+    //width and height in cells, a cell is surrounded by 8 wall characters
+    BasicDungeonGenerator(RoguelikeGame* game, int width, int height, int seed, int roomAttempts, int minRoomSize, int maxRoomSize) 
+     :  m_game(game), m_width(width), m_height(height), m_wWidth(width*2+1), m_wHeight(height*2+1), m_attempts(roomAttempts), m_sizeDistribution(minRoomSize, maxRoomSize), m_colDistribution(0, width), m_rowDistribution(0, height) { 
+        m_generator.seed(seed);
+        generate();
     }
 
     virtual void update() override;
     virtual void handleInput(int key) override;
-    virtual void generate(std::vector<std::vector<Tile>>& tiles) override;
 private:
     struct Room {
         int x, y, width, height;
-        Room(int x, int y, int width, int height) : x(x), y(y), width(width), height(height) {}
     };
+    RoguelikeGame* m_game;
+    int m_width, m_height, m_wWidth, m_wHeight;
 
-    std::default_random_engine generator;
-    std::vector<Room> m_rooms;
-    int m_attempts; 
+    std::default_random_engine m_generator;
     std::uniform_int_distribution<int> m_sizeDistribution, m_colDistribution, m_rowDistribution; 
-    
-    std::mutex mtx;
-    std::condition_variable cv;
-    std::vector<std::vector<bool>> visited;
-    bool shouldStepMaze = false, finishedMaze = false;
-    std::thread* mazeGenerator;
 
+    int m_attempts; 
+    std::vector<Room> m_rooms;
+    std::vector<std::vector<bool>> m_visited; //visited cells either by a room or maze
+    
+    void generate();
+
+    void initCells();
     bool validateRoom(Room room);
     void placeRoom(Room room);
     void generateMaze();

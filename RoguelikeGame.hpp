@@ -11,7 +11,7 @@
 
 class RoguelikeGame {
 public:
-    RoguelikeGame(int width, int height) : m_width(width), m_height(height) {}
+    RoguelikeGame(){}
     
     ~RoguelikeGame(){
         for(Entity& ent : m_entities){
@@ -32,9 +32,8 @@ public:
     }
 
     inline std::vector<std::vector<Tile>>& getWorld(){ return world; }
-    inline int getWidth() { return m_width; }
-    inline int getHeight() { return m_height; }
-
+    inline int getWidth(){ return world.back().size(); }
+    inline int getHeight(){ return world.size(); }
 private:
     bool m_running = true;
     int m_width, m_height;
