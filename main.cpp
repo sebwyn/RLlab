@@ -2,6 +2,8 @@
 
 #include "RoguelikeGame.hpp"
 #include "DenseNN.hpp"
+#include "Camera.hpp"
+#include "BasicDungeonGenerator.hpp"
 
 int main(){
 
@@ -26,8 +28,9 @@ int main(){
     
     nn.print();
 */
-    RoguelikeGame game = RoguelikeGame();
-   
+    RoguelikeGame game = RoguelikeGame(91, 91);
+    //game.addEntity().addComponent(new Camera(&game));
+    game.addEntity().addComponent(new BasicDungeonGenerator(&game, 1001, 100, 4, 13));
     game.start();
 
     return 0;
