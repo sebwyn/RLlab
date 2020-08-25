@@ -12,6 +12,7 @@ class TileManager {
 public:
     static Tile wall;
     static Tile floor;
+    static Tile special;
 
     static void initColors(){
         start_color();
