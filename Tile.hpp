@@ -6,6 +6,11 @@
 struct Tile {
     char sym;
     int color;
+
+    bool operator==(Tile& other) const {
+        if(sym == other.sym && color == other.color) return true;
+        else return false;
+    }
 };
 
 class TileManager {
