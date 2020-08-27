@@ -30,7 +30,7 @@ int main(){
 */
     RoguelikeGame game;
     game.addEntity().addComponent(new Camera(&game));
-    game.addEntity().addComponent(new BasicDungeonGenerator(&game, 50, 25, 1337, 100, 4, 8));
+    game.addEntity().addComponent(new BasicDungeonGenerator(&game, 50, 25, 10101010, 100, 4, 8));
     game.start();
 
     return 0;

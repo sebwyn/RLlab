@@ -38,6 +38,7 @@ private:
     struct CellData {
         bool visited;
         int roomNumber;
+        bool entrance = false;
     };
 
     //maze space primarily
@@ -50,13 +51,37 @@ private:
         Vec2 operator + (const Vec2& other){
             return {r + other.r, c + other.c};
         }
+
+        bool operator == (const Vec2& other){
+            if(r == other.r && c == other.c) return true;
+            else return false;
+        }
+
+        bool operator != (const Vec2& other){
+            if(r == other.r && c == other.c) return false;
+            else return true;
+        }
+
+        Vec2 operator * (const int scalar){
+            return Vec2(scalar * r, scalar * c);
+        }
     };
 
-    struct ExplorationHead {
+    struct ExplorationNode {
         Vec2 pos;
-        char from;
+        Vec2 from;
+        ExplorationNode* parent;
+        std::vector<ExplorationNode> children;
+
+        ExplorationNode() = default;
+        ExplorationNode(Vec2 pos, Vec2 from, ExplorationNode* parent) : pos(pos), from(from), parent(parent) {}
+        
+        ExplorationNode& createChild(Vec2 cPos, Vec2 cFrom){
+            children.emplace_back(cPos, cFrom, this);
+            return children.back();
+        }
     };
-    
+
     int m_attempts; 
     std::vector<Room> m_rooms;
     std::vector<std::vector<CellData>> m_visited; //visited cells either by a room or maze
@@ -71,16 +96,12 @@ private:
             return &(m_visited[cell.r][cell.c]);
         else return nullptr;
     }
-    inline CellData* getNorth(Vec2 cell){return getCell(cell + Vec2(-1, 0)); }
-    inline CellData* getEast(Vec2 cell) {return getCell(cell + Vec2( 0, 1)); }
-    inline CellData* getWest(Vec2 cell) {return getCell(cell + Vec2( 0,-1)); }
-    inline CellData* getSouth(Vec2 cell){return getCell(cell + Vec2( 1, 0)); }
+    Vec2 north = Vec2(-1, 0);
+    Vec2 east =  Vec2( 0, 1);
+    Vec2 west =  Vec2( 0,-1);
+    Vec2 south = Vec2( 1, 0);
 
     inline Tile* getWorld(Vec2 cell, Vec2 direction = Vec2(0, 0)){return &(m_game->getWorld()[convToWorld(cell.r)+direction.r][convToWorld(cell.c)+direction.c]);}
-    inline Tile* getNorthWall(Vec2 cell){return getWorld(cell, Vec2(-1, 0)); }
-    inline Tile* getEastWall(Vec2 cell) {return getWorld(cell, Vec2( 0, 1)); }
-    inline Tile* getWestWall(Vec2 cell) {return getWorld(cell, Vec2( 0,-1)); }
-    inline Tile* getSouthWall(Vec2 cell){return getWorld(cell, Vec2( 1, 0)); }
     
     int convToWorld(int pos, bool aligned = true){
         return pos * 2 + (aligned ? 1 : 0);
@@ -96,5 +117,8 @@ private:
     void placeRoom(Room room);
     void stepMaze(Vec2 cell);
     void makeDoors(Room currentRoom);
-    void exploreMaze(Vec2 cell, Vec2 direction, char from, std::vector<ExplorationHead>& newEdgeCells);
+    void exploreMaze(ExplorationNode* node, Vec2 direction, std::vector<ExplorationNode*>& newEdgeCells);
 };
+
+template class std::vector<BasicDungeonGenerator::ExplorationNode*>;
+template class std::vector<BasicDungeonGenerator::ExplorationNode>;
