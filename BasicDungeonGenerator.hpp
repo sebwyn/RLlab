@@ -18,7 +18,7 @@ public:
         m_sizeDistribution(minRoomSize, maxRoomSize), m_colDistribution(0, width), m_rowDistribution(0, height) 
     { 
         m_generator.seed(seed);
-        generate();
+        m_generationThread = new std::thread(&BasicDungeonGenerator::generate, this);
     }
 
     virtual void update() override;
@@ -32,7 +32,6 @@ private:
     
     struct Room {
         int x, y, width, height;
-        bool merged;
     };
 
     struct CellData {
@@ -73,12 +72,19 @@ private:
         ExplorationNode* parent;
         std::vector<ExplorationNode> children;
 
+        bool deadEnd = false;
+
         ExplorationNode() = default;
         ExplorationNode(Vec2 pos, Vec2 from, ExplorationNode* parent) : pos(pos), from(from), parent(parent) {}
         
         ExplorationNode& createChild(Vec2 cPos, Vec2 cFrom){
             children.emplace_back(cPos, cFrom, this);
             return children.back();
+        }
+
+        bool operator == (const ExplorationNode& other){
+            if(pos == other.pos) return true;
+            return false;
         }
     };
 
@@ -116,8 +122,10 @@ private:
     bool validateRoom(Room room);
     void placeRoom(Room room);
     void stepMaze(Vec2 cell);
-    void makeDoors(Room currentRoom);
-    void exploreMaze(ExplorationNode* node, Vec2 direction, std::vector<ExplorationNode*>& newEdgeCells);
+    void makeDoors(Room currentRoom, int numOfDoors = 1);
+    bool placeDoor(Vec2 position, Vec2 direction);
+    void exploreMaze();
+    void stepExploration(ExplorationNode* node, Vec2 direction, std::vector<ExplorationNode*>& newEdgeCells);
 };
 
 template class std::vector<BasicDungeonGenerator::ExplorationNode*>;
