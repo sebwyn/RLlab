@@ -10,6 +10,10 @@ struct Vec2 {
         return {r + other.r, c + other.c};
     }
 
+    Vec2 operator-(const Vec2 &other) {
+        return {r - other.r, c - other.c};
+    }
+
     bool operator==(const Vec2 &other) {
         if (r == other.r && c == other.c)
             return true;
@@ -26,6 +30,10 @@ struct Vec2 {
 
     Vec2 operator*(const int scalar) {
         return Vec2(scalar * r, scalar * c);
+    }
+
+    Vec2 operator/(const int scalar) {
+        return Vec2(r / scalar, c / scalar);
     }
 };
 

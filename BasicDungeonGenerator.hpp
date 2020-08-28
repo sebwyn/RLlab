@@ -14,12 +14,17 @@
 class BasicDungeonGenerator : public Component {
 public:
     //width and height in cells, a cell is surrounded by 8 wall characters
-    BasicDungeonGenerator(RoguelikeGame* game, int width, int height, int seed, int roomAttempts, int minRoomSize, int maxRoomSize) 
-     :  m_game(game), m_width(width), m_height(height), m_wWidth(width*2+1), m_wHeight(height*2+1), m_attempts(roomAttempts), 
-        m_sizeDistribution(minRoomSize, maxRoomSize), m_colDistribution(0, width), m_rowDistribution(0, height) 
+    BasicDungeonGenerator(RoguelikeGame* game, int rows, int columns, int seed, int roomAttempts, int minRoomSize, int maxRoomSize) 
+     : m_game(game), 
+       m_rows(rows), 
+       m_columns(columns), 
+       m_wRows(rows*2+1), 
+       m_wColumns(columns*2+1), 
+       m_attempts(roomAttempts), 
+       m_minRoomSize(minRoomSize),
+       m_maxRoomSize(maxRoomSize)
     { 
         m_generator.seed(seed);
-        //m_generationThread = new std::thread(&BasicDungeonGenerator::generate, this);
         generate();
     }
 
@@ -29,13 +34,12 @@ public:
     Vec2 getSpawnPoint();
 private:
     RoguelikeGame* m_game;
-    int m_width, m_height, m_wWidth, m_wHeight;
+    int m_rows, m_columns, m_wRows, m_wColumns, m_minRoomSize, m_maxRoomSize;
 
     std::default_random_engine m_generator;
-    std::uniform_int_distribution<int> m_sizeDistribution, m_colDistribution, m_rowDistribution;
     
     struct Room {
-        int x, y, width, height;
+        Vec2 pos, size;
     };
 
     struct CellData {
@@ -53,14 +57,20 @@ private:
         bool deadEnd = false;
 
         ExplorationNode() = default;
-        ExplorationNode(Vec2 pos, Vec2 from, ExplorationNode* parent) : pos(pos), from(from), parent(parent) {}
+        ExplorationNode(Vec2 pos, Vec2 from, ExplorationNode* parent) 
+         : pos(pos), 
+           from(from), 
+           parent(parent) 
+        {}
         
-        ExplorationNode& createChild(Vec2 cPos, Vec2 cFrom){
+        ExplorationNode& createChild(Vec2 cPos, Vec2 cFrom)
+        {
             children.emplace_back(cPos, cFrom, this);
             return children.back();
         }
 
-        bool operator == (const ExplorationNode& other){
+        bool operator == (const ExplorationNode& other)
+        {
             if(pos == other.pos) return true;
             return false;
         }
@@ -68,32 +78,42 @@ private:
 
     int m_attempts; 
     std::vector<Room> m_rooms;
-    std::vector<std::vector<CellData>> m_visited; //visited cells either by a room or maze
 
-    bool m_shouldStep = false;
-    std::condition_variable m_cv;
-    std::mutex m_mtx;
-    std::thread* m_generationThread;
-    
+    //visited cells either by a room or maze
+    std::vector<std::vector<CellData>> m_cells; 
+
     CellData* getCell(Vec2 cell){
-        if(0 <= cell.r && cell.r < m_height && 0 <= cell.c && cell.c < m_width) 
-            return &(m_visited[cell.r][cell.c]);
+        if(0 <= cell.r && cell.r < m_rows && 0 <= cell.c && cell.c < m_columns) 
+            return &(m_cells[cell.r][cell.c]);
         else return nullptr;
     }
 
-    inline Tile* getWorld(Vec2 cell, Vec2 direction = Vec2(0, 0)){
-        return &(m_game->getWorld()[convToWorld(cell.r)+direction.r][convToWorld(cell.c)+direction.c]);
+    inline Tile* getWorld(Vec2 cell, Vec2 offset = Vec2(0, 0)){
+        Vec2 worldP = convToWorld(cell) + offset;
+        return &(m_game->getWorld()[worldP.r][worldP.c]);
     }
     
-    int convToWorld(int pos, bool aligned = true){
+    inline int convToWorld(int pos, bool aligned = true){
         return pos * 2 + (aligned ? 1 : 0);
     }
-    int convToMaze(int pos){
+    inline Vec2 convToWorld(Vec2 pos, bool aligned = true){
+        return pos * 2 + (aligned ? Vec2(1, 1) : Vec2(0, 0));
+    }
+    inline int convToMaze(int pos){
         return pos / 2;
+    }
+    inline Vec2 convToMaze(Vec2 pos){
+        return pos / 2;
+    }
+    
+    int random(int start, int end){
+        std::uniform_int_distribution<int> distribution(start, end);
+        return distribution(m_generator);
     }
 
     void generate();
 
+    void clearData();
     void initCells();
     bool validateRoom(Room room);
     void placeRoom(Room room);
@@ -102,7 +122,5 @@ private:
     bool placeDoor(Vec2 position, Vec2 direction);
     void exploreMaze();
     void stepExploration(ExplorationNode* node, Vec2 direction, std::vector<ExplorationNode*>& newEdgeCells);
+    void handleDeadEnd(ExplorationNode* deadEnd);
 };
-
-template class std::vector<BasicDungeonGenerator::ExplorationNode*>;
-template class std::vector<BasicDungeonGenerator::ExplorationNode>;

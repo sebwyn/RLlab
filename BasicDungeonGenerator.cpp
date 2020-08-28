@@ -3,61 +3,68 @@
 void BasicDungeonGenerator::update(){
 }
 
-void BasicDungeonGenerator::handleInput(int key){
+void BasicDungeonGenerator::handleInput(int key)
+{
     switch(key){
-        case ' ':
-            {
-                std::unique_lock<std::mutex> lk(m_mtx);
-                m_shouldStep = true;
-                m_cv.notify_one();
-            }
-            break;
-        case 'b':
-            {
-                int a = 10;
-            }
-            break;
     }
 }
 
-Vec2 BasicDungeonGenerator::getSpawnPoint(){
-    return Vec2(convToWorld(m_rooms[0].x), convToWorld(m_rooms[0].y));
+/*
+ * set the player spawn to be the upper left corner of the first room
+ */
+Vec2 BasicDungeonGenerator::getSpawnPoint()
+{
+    return convToWorld(m_rooms[0].pos);
 }
 
-void BasicDungeonGenerator::generate(){
+/*
+ * initialize the world data to the proper format
+ * attempt to place m_attempts rooms randomly
+ * flood fill the area surrounding the rooms with maze
+ * randomly make doors in all the rooms
+ * explore the maze and get rid of dead ends
+ */
+void BasicDungeonGenerator::generate()
+{
+    clearData();
     initCells();
     for(int i = 0; i < m_attempts; i++){
-        Room room = {m_colDistribution(m_generator), m_rowDistribution(m_generator), 
-            m_sizeDistribution(m_generator), m_sizeDistribution(m_generator)}; 
+        Room room = {
+            Vec2(random(1, m_rows-1), random(1, m_columns-1)), 
+            Vec2(random(m_minRoomSize, m_maxRoomSize),random(m_minRoomSize, m_maxRoomSize))
+        }; 
         if(validateRoom(room)){
+            m_rooms.push_back(room);
             placeRoom(room);
         }
     }
-    //m_generationThread = new std::thread(&BasicDungeonGenerator::stepMaze, this, Vec2(0, 0));
     stepMaze(Vec2(0, 0));
-    //wait for the space bar to be pressed
-    /*{
-        std::unique_lock<std::mutex> lk(m_mtx);
-        if(!m_shouldStep) m_cv.wait(lk);
-        m_shouldStep = false;
-    }*/
-    std::uniform_int_distribution<int> numDoorRange(1, 3);
     for(int i = 0; i < m_rooms.size(); i++){
-        int numDoors = numDoorRange(m_generator); 
+        int numDoors = random(1, 3); 
         makeDoors(m_rooms[i], numDoors);
     }
     exploreMaze();
 }
 
+void BasicDungeonGenerator::clearData(){
+    m_game->getWorld().clear();
+    m_cells.clear();
+}
 
-void BasicDungeonGenerator::initCells(){
-    for(int r = 0; r < m_wHeight; r++){
+/*
+ * populate the world data with the proper formatted cells for this type of 
+ * generation
+ * while populating m_cells
+ */
+void BasicDungeonGenerator::initCells()
+{
+    for(int r = 0; r < m_wRows; r++){
         m_game->getWorld().push_back(std::vector<Tile>());
-        if(r % 2 == 1) m_visited.push_back(std::vector<CellData>());
-        for(int c = 0; c < m_wWidth; c++){
+        if(r % 2 == 1) m_cells.push_back(std::vector<CellData>());
+        for(int c = 0; c < m_wColumns; c++){
             if(r % 2 == 1 && c % 2 == 1){
                 m_game->getWorld().back().push_back(TileManager::floor);
-                m_visited.back().push_back({false, -1});
+                m_cells.back().push_back({false, -1});
             } else { 
                 m_game->getWorld().back().push_back(TileManager::wall);
             }
@@ -65,47 +72,68 @@ void BasicDungeonGenerator::initCells(){
     }
 }
 
-void BasicDungeonGenerator::placeRoom(Room room){
-    //need to convert rooms in cell space to rooms in world space
-    for(int r = convToWorld(room.y, false); r < convToWorld(room.y + room.height); r++){
-        for(int c = convToWorld(room.x, false); c < convToWorld(room.x + room.width); c++){
-            if(c == convToWorld(room.x, false) || c == convToWorld(room.x + room.width, false) 
-            || r == convToWorld(room.y, false) || r == convToWorld(room.y + room.height, false)) {
-                //this tile is a wall on the border of a room
-                m_game->getWorld()[r][c] = TileManager::wall;
-            } else {
-                if(r % 2 == 1 && c % 2 == 1) m_visited[convToMaze(r)][convToMaze(c)] = {true, (int)m_rooms.size()};
-                m_game->getWorld()[r][c] = TileManager::floor;
+/* 
+ * change the world data at the room location 
+ * to make the room appear in the world
+ * assuming that initCells has already been called
+ */
+void BasicDungeonGenerator::placeRoom(Room room)
+{
+    //iterate over the inside of the room in world space clearing it out
+    //and if the current pos in world space is a cell, make it visited
+    Vec2 topLeft = convToWorld(Vec2(room.pos.r, room.pos.c));
+    Vec2 bottomRight = topLeft + convToWorld(Vec2(room.size.r-1, room.size.c-1)); 
+    for(int r = topLeft.r; r < bottomRight.r; r++){
+        for(int c = topLeft.c; c < bottomRight.c; c++){
+            if(r % 2 == 1 && c % 2 == 1)
+                *(getCell(convToMaze(Vec2(r, c)))) = {true, (int)m_rooms.size()};
+            m_game->getWorld()[r][c] = TileManager::floor;
+        }
+    }
+}
+
+//might have some collision problems
+bool BasicDungeonGenerator::validateRoom(Room room)
+{
+    Vec2 roomStart = room.pos;
+    Vec2 roomExtent = roomStart + room.size;
+    //check to make sure the room is in the world bounds
+    if(!(0 < roomStart.r && roomExtent.r < m_rows 
+    &&   0 < roomStart.c && roomExtent.c < m_columns))
+        return false;
+
+    //check to make sure the room doesn't collide with any other rooms
+    for(Room r : m_rooms){
+        Vec2 otherStart = r.pos;
+        Vec2 otherExtent = otherStart + r.size;
+        if((otherStart.r <= room.pos.r && room.pos.r < otherExtent.r) 
+        || (roomStart.r <= otherStart.r && otherStart.r < roomExtent.r)){
+            if((otherStart.c <= roomStart.c && roomStart.c < otherExtent.c) 
+            || (roomStart.c <= otherStart.c && otherStart.c < roomExtent.c)){
+                return false;
             }
         }
     }
-    m_rooms.push_back(room);
+    return true;
 }
 
-bool BasicDungeonGenerator::validateRoom(Room room){
-    if(1 < room.x && room.x + room.width < m_width-1 && 1 < room.y && room.y + room.height < m_height-1){
-        for(Room r : m_rooms){
-            //check to make sure the rooms don't collide
-            if((r.x <= room.x && room.x < r.x + r.width) || (room.x <= r.x && r.x < room.x + room.width)){
-                if((r.y <= room.y && room.y < r.y + r.height) || (room.y <= r.y && r.y < room.y + room.height)){
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-    return false;
-}
-
-void BasicDungeonGenerator::stepMaze(Vec2 cellPos){
+/*
+ * this is the function that actually flood fills a maze
+ * using recursive backtracking
+ */
+void BasicDungeonGenerator::stepMaze(Vec2 cellPos)
+{
     struct DirectionCell {
         char dir;
         Vec2 pos;
 
-        DirectionCell(char dir, Vec2 pos) : dir(dir), pos(pos) {}
+        DirectionCell(char dir, Vec2 pos) 
+         : dir(dir), 
+           pos(pos) 
+        {}
     };
 
-    *getCell(cellPos) = {true, -1};
+    getCell(cellPos)->visited = true;
 
     std::vector<DirectionCell> neighbors;
     neighbors.reserve(4);
@@ -120,18 +148,11 @@ void BasicDungeonGenerator::stepMaze(Vec2 cellPos){
         neighbors.emplace_back('S', cellPos + south); 
     while(neighbors.size() > 0){
         //pick a neighbor 
-        std::uniform_int_distribution<int> directonPicker(0, neighbors.size()-1);
-        int selectedNum = directonPicker(m_generator);
+        int selectedNum = random(0, neighbors.size()-1);
         DirectionCell selected = neighbors[selectedNum];
         //cells visited status may have changed
         if(!(getCell(selected.pos)->visited)){
             //open the wall leading to the neighbor
-            /*{
-                std::unique_lock<std::mutex> lk(m_mtx);
-                if(!m_shouldStep) m_cv.wait(lk);
-                m_shouldStep = false;
-            }*/
-
             switch(selected.dir){
                 case 'N': *(getWorld(cellPos, north)) = TileManager::floor; break;
                 case 'E': *(getWorld(cellPos, east))  = TileManager::floor; break;
@@ -144,8 +165,11 @@ void BasicDungeonGenerator::stepMaze(Vec2 cellPos){
     }
 }
 
-void BasicDungeonGenerator::exploreMaze(){
-
+/*
+ * explore every part of the maze and fill in dead ends as it goes
+ */
+void BasicDungeonGenerator::exploreMaze()
+{
     std::vector<ExplorationNode*> edgeCells;
     std::vector<ExplorationNode*> newEdgeCells;
     ExplorationNode* root;
@@ -153,55 +177,34 @@ void BasicDungeonGenerator::exploreMaze(){
     std::vector<ExplorationNode*> deadEnds;
     
     //naively search through cells until we find an entrance
-    for(int r = 0; r < m_height; r++){
-        for(int c = 0; c < m_width; c++){
-            if(getCell(Vec2(r, c))->entrance) root = new ExplorationNode(Vec2(r, c), Vec2(0, 0), nullptr);
+    for(int r = 0; r < m_rows; r++){
+        for(int c = 0; c < m_columns; c++){
+            if(getCell(Vec2(r, c))->entrance)
+                root = new ExplorationNode(Vec2(r, c), Vec2(0, 0), nullptr);
         } 
     }
     edgeCells.push_back(root);
 
-    //store the exploration in a tree until we reach the end destination and then decompose all the non terminal 
-    //parts of the tree
+    //store the exploration in a tree until we reach the end destination and 
+    //then decompose all the non terminal parts of the tree
     while(true){
         //explore the maze
         if(edgeCells.size() == 0) break;
         for(int i = 0; i < edgeCells.size(); i++){
-
-            *(getWorld(edgeCells[i]->pos)) = TileManager::special;
-
-            //add new neighbors to newEdgeCells
             //check all of the neighbors around the current edge and see if any are rooms
+            //add new neighbors to newEdgeCells
             edgeCells[i]->children.reserve(4);
-            if(edgeCells[i]->from != north) stepExploration(edgeCells[i], north, newEdgeCells);
-            if(edgeCells[i]->from != east)  stepExploration(edgeCells[i], east,  newEdgeCells);
-            if(edgeCells[i]->from != west)  stepExploration(edgeCells[i], west,  newEdgeCells);
-            if(edgeCells[i]->from != south) stepExploration(edgeCells[i], south, newEdgeCells);
+            if(edgeCells[i]->from != north) 
+                stepExploration(edgeCells[i], north, newEdgeCells);
+            if(edgeCells[i]->from != east)  
+                stepExploration(edgeCells[i], east,  newEdgeCells);
+            if(edgeCells[i]->from != west)  
+                stepExploration(edgeCells[i], west,  newEdgeCells);
+            if(edgeCells[i]->from != south) 
+                stepExploration(edgeCells[i], south, newEdgeCells);
 
-            if(edgeCells[i]->children.size() == 0 && !getCell(edgeCells[i]->pos)->entrance){
-                ExplorationNode *currNode = edgeCells[i];
-                while(true){
-                    *(getWorld(currNode->pos)) = TileManager::wall;
-                    *(getWorld(currNode->pos, currNode->from)) = TileManager::wall;
-                    //possibly deleting the child at the intersection instead of the one next to the intersection 
-                    int aliveSiblings = 0;
-                    for(int s = 0; s < currNode->parent->children.size(); s++)
-                        if(!(currNode->parent->children[s].deadEnd)) aliveSiblings++;
-                    if(aliveSiblings > 1 || getCell(currNode->parent->pos)->entrance) {
-                        currNode->deadEnd = true;
-                        break;
-                    }
-                    else currNode = currNode->parent;
-                }
-            }
+            handleDeadEnd(edgeCells[i]);
         }
-
-        //wait for the space bar to be pressed
-        /*{
-            std::unique_lock<std::mutex> lk(m_mtx);
-            if(!m_shouldStep) m_cv.wait(lk);
-            m_shouldStep = false;
-        }*/
-
         edgeCells = newEdgeCells;
         newEdgeCells.clear();
     }
@@ -231,25 +234,36 @@ bool BasicDungeonGenerator::placeDoor(Vec2 position, Vec2 direction){
 
 void BasicDungeonGenerator::makeDoors(Room currentRoom, int numOfDoors){
     //TODO: make a more bare bones switch case and put the rest of the stuff in a different spot
-    std::uniform_int_distribution<int> rSide(0, 3), rWidth(0, currentRoom.width-1), rHeight(0, currentRoom.height-1);
     Vec2 inConn, direction;
     int doorsAdded = 0;
     while(doorsAdded != numOfDoors){
-        switch(rSide(m_generator)){
+        switch(random(0, 3)){
             case 0:
-                inConn = {currentRoom.y, currentRoom.x + rWidth(m_generator)};
+                inConn = {
+                    currentRoom.pos.r,
+                    currentRoom.pos.c + random(0, currentRoom.size.c-1)
+                };
                 direction = north;
                 break;
             case 1:
-                inConn = {currentRoom.y + rHeight(m_generator), currentRoom.x + currentRoom.width-1};
+                inConn = {
+                    currentRoom.pos.r + random(0, currentRoom.size.r-1),
+                    currentRoom.pos.c + currentRoom.size.c-1
+                };
                 direction = east;
                 break;
             case 2:
-                inConn = {currentRoom.y + currentRoom.height-1, currentRoom.x + rWidth(m_generator)};
+                inConn = {
+                    currentRoom.pos.r + currentRoom.size.r-1,
+                    currentRoom.pos.c + random(0, currentRoom.size.c-1)
+                };
                 direction = south;
                 break;
             case 3:
-                inConn = {currentRoom.y + rHeight(m_generator), currentRoom.x};
+                inConn = {
+                    currentRoom.pos.r + random(0, currentRoom.size.r-1),
+                    currentRoom.pos.c
+                };
                 direction = west;
                 break;
         }
@@ -261,3 +275,24 @@ void BasicDungeonGenerator::makeDoors(Room currentRoom, int numOfDoors){
     //*(getWorld(inConn)) = TileManager::special;
 }
 
+void BasicDungeonGenerator::handleDeadEnd(ExplorationNode* node){
+    //check to see if this cell is a dead end and march up the tree
+    //filling in the maze until we reach an intersection
+    if(node->children.size() == 0 && !getCell(node->pos)->entrance){
+        ExplorationNode *currNode = node;
+        while(true){
+            //fill in the world with walls
+            *(getWorld(currNode->pos)) = TileManager::wall;
+            *(getWorld(currNode->pos, currNode->from)) = TileManager::wall;
+            //check to see if the parent of the current node is an intersection
+            int aliveSiblings = 0;
+            for(int s = 0; s < currNode->parent->children.size(); s++)
+                if(!(currNode->parent->children[s].deadEnd)) aliveSiblings++;
+            if(aliveSiblings > 1 || getCell(currNode->parent->pos)->entrance) {
+                currNode->deadEnd = true;
+                break;
+            }
+            else currNode = currNode->parent;
+        }
+    }
+}

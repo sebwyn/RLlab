@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "RoguelikeGame.hpp"
-#include "DenseNN.hpp"
+#include "DenseNN.hpp" 
 #include "Camera.hpp"
 #include "BasicDungeonGenerator.hpp"
 #include "Player.hpp"
@@ -31,7 +31,7 @@ int main(){
 */
     RoguelikeGame game;
     game.addEntity().addComponent(new Camera(&game));
-    auto dungeon = new BasicDungeonGenerator(&game, 50, 25, 82745987, 100, 4, 8);
+    auto dungeon = new BasicDungeonGenerator(&game, 25, 50, 82745987, 100, 4, 8);
     game.addEntity().addComponent(dungeon);
     game.addEntity().addComponent(new Player(&game, dungeon->getSpawnPoint()));
     game.start();
