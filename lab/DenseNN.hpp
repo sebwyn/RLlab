@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cstdlib>
 
-#include "Eigen/Dense"
+#include "Dense"
 
 using Eigen::MatrixXd;
 

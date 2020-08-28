@@ -14,5 +14,5 @@ protected:
     int m_width, m_height;
     std::vector<std::vector<Tile>>* m_tiles; 
     
-    void populateTiles(char sym);
+    void populateTiles(Tile t);
 };

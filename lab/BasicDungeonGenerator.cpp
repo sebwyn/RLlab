@@ -46,7 +46,8 @@ void BasicDungeonGenerator::generate()
     exploreMaze();
 }
 
-void BasicDungeonGenerator::clearData(){
+void BasicDungeonGenerator::clearData()
+{
     m_game->getWorld().clear();
     m_cells.clear();
 }
@@ -211,7 +212,8 @@ void BasicDungeonGenerator::exploreMaze()
     delete root;
 }
 
-void BasicDungeonGenerator::stepExploration(ExplorationNode* node, Vec2 direction, std::vector<ExplorationNode*>& newEdgeCells){  
+void BasicDungeonGenerator::stepExploration(ExplorationNode* node, Vec2 direction, std::vector<ExplorationNode*>& newEdgeCells)
+{  
     Vec2 neighborPos = node->pos + direction;
     CellData* neighborData = getCell(neighborPos);
     Tile* neighborConnection = getWorld(node->pos, direction);
@@ -224,7 +226,8 @@ void BasicDungeonGenerator::stepExploration(ExplorationNode* node, Vec2 directio
     }
 }
 
-bool BasicDungeonGenerator::placeDoor(Vec2 position, Vec2 direction){
+bool BasicDungeonGenerator::placeDoor(Vec2 position, Vec2 direction)
+{
     CellData* doorData = getCell(position + direction);
     if (doorData && doorData->roomNumber == -1 && !doorData->entrance){
         *(getWorld(position, direction)) = TileManager::floor;
@@ -232,7 +235,8 @@ bool BasicDungeonGenerator::placeDoor(Vec2 position, Vec2 direction){
     } else return false;
 }
 
-void BasicDungeonGenerator::makeDoors(Room currentRoom, int numOfDoors){
+void BasicDungeonGenerator::makeDoors(Room currentRoom, int numOfDoors)
+{
     //TODO: make a more bare bones switch case and put the rest of the stuff in a different spot
     Vec2 inConn, direction;
     int doorsAdded = 0;
@@ -275,7 +279,8 @@ void BasicDungeonGenerator::makeDoors(Room currentRoom, int numOfDoors){
     //*(getWorld(inConn)) = TileManager::special;
 }
 
-void BasicDungeonGenerator::handleDeadEnd(ExplorationNode* node){
+void BasicDungeonGenerator::handleDeadEnd(ExplorationNode* node)
+{
     //check to see if this cell is a dead end and march up the tree
     //filling in the maze until we reach an intersection
     if(node->children.size() == 0 && !getCell(node->pos)->entrance){
