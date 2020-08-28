@@ -9,6 +9,7 @@
 
 #include "Component.hpp"
 #include "RoguelikeGame.hpp"
+#include "Vec2.hpp"
 
 class BasicDungeonGenerator : public Component {
 public:
@@ -18,11 +19,14 @@ public:
         m_sizeDistribution(minRoomSize, maxRoomSize), m_colDistribution(0, width), m_rowDistribution(0, height) 
     { 
         m_generator.seed(seed);
-        m_generationThread = new std::thread(&BasicDungeonGenerator::generate, this);
+        //m_generationThread = new std::thread(&BasicDungeonGenerator::generate, this);
+        generate();
     }
 
     virtual void update() override;
     virtual void handleInput(int key) override;
+
+    Vec2 getSpawnPoint();
 private:
     RoguelikeGame* m_game;
     int m_width, m_height, m_wWidth, m_wHeight;
@@ -38,32 +42,6 @@ private:
         bool visited;
         int roomNumber;
         bool entrance = false;
-    };
-
-    //maze space primarily
-    struct Vec2 {
-        int r, c;
-        
-        Vec2() = default;
-        Vec2(int r, int c) : r(r), c(c) {}
-
-        Vec2 operator + (const Vec2& other){
-            return {r + other.r, c + other.c};
-        }
-
-        bool operator == (const Vec2& other){
-            if(r == other.r && c == other.c) return true;
-            else return false;
-        }
-
-        bool operator != (const Vec2& other){
-            if(r == other.r && c == other.c) return false;
-            else return true;
-        }
-
-        Vec2 operator * (const int scalar){
-            return Vec2(scalar * r, scalar * c);
-        }
     };
 
     struct ExplorationNode {
@@ -102,10 +80,6 @@ private:
             return &(m_visited[cell.r][cell.c]);
         else return nullptr;
     }
-    Vec2 north = Vec2(-1, 0);
-    Vec2 east =  Vec2( 0, 1);
-    Vec2 west =  Vec2( 0,-1);
-    Vec2 south = Vec2( 1, 0);
 
     inline Tile* getWorld(Vec2 cell, Vec2 direction = Vec2(0, 0)){return &(m_game->getWorld()[convToWorld(cell.r)+direction.r][convToWorld(cell.c)+direction.c]);}
     

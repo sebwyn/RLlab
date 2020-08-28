@@ -18,6 +18,7 @@ public:
     static Tile wall;
     static Tile floor;
     static Tile special;
+    static Tile player;
 
     static void initColors(){
         start_color();

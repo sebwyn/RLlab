@@ -20,6 +20,10 @@ void BasicDungeonGenerator::handleInput(int key){
     }
 }
 
+Vec2 BasicDungeonGenerator::getSpawnPoint(){
+    return Vec2(convToWorld(m_rooms[0].x), convToWorld(m_rooms[0].y));
+}
+
 void BasicDungeonGenerator::generate(){
     initCells();
     for(int i = 0; i < m_attempts; i++){
@@ -31,11 +35,11 @@ void BasicDungeonGenerator::generate(){
     //m_generationThread = new std::thread(&BasicDungeonGenerator::stepMaze, this, Vec2(0, 0));
     stepMaze(Vec2(0, 0));
     //wait for the space bar to be pressed
-    {
+    /*{
         std::unique_lock<std::mutex> lk(m_mtx);
         if(!m_shouldStep) m_cv.wait(lk);
         m_shouldStep = false;
-    }
+    }*/
     std::uniform_int_distribution<int> numDoorRange(1, 3);
     for(int i = 0; i < m_rooms.size(); i++){
         int numDoors = numDoorRange(m_generator); 
@@ -186,11 +190,11 @@ void BasicDungeonGenerator::exploreMaze(){
         }
 
         //wait for the space bar to be pressed
-        {
+        /*{
             std::unique_lock<std::mutex> lk(m_mtx);
             if(!m_shouldStep) m_cv.wait(lk);
             m_shouldStep = false;
-        }
+        }*/
 
         edgeCells = newEdgeCells;
         newEdgeCells.clear();

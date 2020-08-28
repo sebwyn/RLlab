@@ -17,6 +17,6 @@ project(MyProject VERSION 1.0
 
 set(CMAKE_BUILD_TYPE Debug)
 
-add_executable(lab main.cpp Entity.cpp Camera.cpp BasicDungeonGenerator.cpp Tile.cpp)
+add_executable(lab main.cpp Entity.cpp Camera.cpp BasicDungeonGenerator.cpp Tile.cpp Player.cpp Vec2.cpp)
 target_link_libraries(lab curses)
 #set_property(TARGET lab PROPERTY CMAKE_CXX_FLAGS_DEBUG "-g")
