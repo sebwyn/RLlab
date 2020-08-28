@@ -27,7 +27,8 @@ Vec2 BasicDungeonGenerator::getSpawnPoint(){
 void BasicDungeonGenerator::generate(){
     initCells();
     for(int i = 0; i < m_attempts; i++){
-        Room room = {m_colDistribution(m_generator), m_rowDistribution(m_generator), m_sizeDistribution(m_generator), m_sizeDistribution(m_generator)}; 
+        Room room = {m_colDistribution(m_generator), m_rowDistribution(m_generator), 
+            m_sizeDistribution(m_generator), m_sizeDistribution(m_generator)}; 
         if(validateRoom(room)){
             placeRoom(room);
         }
@@ -68,7 +69,8 @@ void BasicDungeonGenerator::placeRoom(Room room){
     //need to convert rooms in cell space to rooms in world space
     for(int r = convToWorld(room.y, false); r < convToWorld(room.y + room.height); r++){
         for(int c = convToWorld(room.x, false); c < convToWorld(room.x + room.width); c++){
-            if(c == convToWorld(room.x, false) || c == convToWorld(room.x + room.width, false) || r == convToWorld(room.y, false) || r == convToWorld(room.y + room.height, false)) {
+            if(c == convToWorld(room.x, false) || c == convToWorld(room.x + room.width, false) 
+            || r == convToWorld(room.y, false) || r == convToWorld(room.y + room.height, false)) {
                 //this tile is a wall on the border of a room
                 m_game->getWorld()[r][c] = TileManager::wall;
             } else {
@@ -108,10 +110,14 @@ void BasicDungeonGenerator::stepMaze(Vec2 cellPos){
     std::vector<DirectionCell> neighbors;
     neighbors.reserve(4);
     //populate neighbors
-    if(getCell(cellPos + north) && !getCell(cellPos + north)->visited) neighbors.emplace_back('N', cellPos + north);
-    if(getCell(cellPos + east)  && !getCell(cellPos + east)->visited)  neighbors.emplace_back('E', cellPos + east);
-    if(getCell(cellPos + west)  && !getCell(cellPos + west)->visited)  neighbors.emplace_back('W', cellPos + west);
-    if(getCell(cellPos + south) && !getCell(cellPos + south)->visited) neighbors.emplace_back('S', cellPos + south); 
+    if(getCell(cellPos + north) && !getCell(cellPos + north)->visited) 
+        neighbors.emplace_back('N', cellPos + north);
+    if(getCell(cellPos + east)  && !getCell(cellPos + east)->visited)  
+        neighbors.emplace_back('E', cellPos + east);
+    if(getCell(cellPos + west)  && !getCell(cellPos + west)->visited)  
+        neighbors.emplace_back('W', cellPos + west);
+    if(getCell(cellPos + south) && !getCell(cellPos + south)->visited) 
+        neighbors.emplace_back('S', cellPos + south); 
     while(neighbors.size() > 0){
         //pick a neighbor 
         std::uniform_int_distribution<int> directonPicker(0, neighbors.size()-1);

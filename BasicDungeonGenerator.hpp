@@ -81,7 +81,9 @@ private:
         else return nullptr;
     }
 
-    inline Tile* getWorld(Vec2 cell, Vec2 direction = Vec2(0, 0)){return &(m_game->getWorld()[convToWorld(cell.r)+direction.r][convToWorld(cell.c)+direction.c]);}
+    inline Tile* getWorld(Vec2 cell, Vec2 direction = Vec2(0, 0)){
+        return &(m_game->getWorld()[convToWorld(cell.r)+direction.r][convToWorld(cell.c)+direction.c]);
+    }
     
     int convToWorld(int pos, bool aligned = true){
         return pos * 2 + (aligned ? 1 : 0);
