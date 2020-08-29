@@ -3,12 +3,13 @@
 #include <vector>
 #include <curses.h>
 
+#include <glm/glm.hpp>
+
 struct Tile {
-    char sym;
-    int color;
+    glm::vec4 color;
 
     bool operator==(Tile& other) const {
-        if(sym == other.sym && color == other.color) return true;
+        if(color == other.color) return true;
         else return false;
     }
 };
@@ -19,11 +20,4 @@ public:
     static Tile floor;
     static Tile special;
     static Tile player;
-
-    static void initColors(){
-        start_color();
-
-        init_pair(1, COLOR_BLACK, COLOR_RED);
-        init_pair(2, COLOR_WHITE, COLOR_BLACK);
-    };
 };

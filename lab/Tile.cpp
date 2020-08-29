@@ -1,6 +1,6 @@
 #include "Tile.hpp"
 
-Tile TileManager::wall = {' ', 1};
-Tile TileManager::floor = {' ', 2};
-Tile TileManager::special = {'#', 2};
-Tile TileManager::player = {'@', 2};
+Tile TileManager::wall = {glm::vec4(1, 0, 0, 1)};
+Tile TileManager::floor = {glm::vec4(0, 0, 0, 1)};
+Tile TileManager::special = {glm::vec4(1, 1, 0, 1)};
+Tile TileManager::player = {glm::vec4(1, 1, 1, 1)};

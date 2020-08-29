@@ -1,3 +1,6 @@
 [submodule "ext/Monarch"]
 	path = ext/Monarch
 	url = https://github.com/sebwyn/Monarch
+[submodule "ext/eigen"]
+	path = ext/eigen
+	url = https://gitlab.com/libeigen/eigen

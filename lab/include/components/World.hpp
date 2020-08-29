@@ -2,20 +2,20 @@
 
 #include "Monarch.hpp"
 
+#include "BasicDungeonGenerator.hpp"
+#include "Tile.hpp"
+
 class World : public Monarch::Component {
 public:
-    virtual void init() override {}
-    virtual void update() override {}
-    virtual void draw() override 
-    {
-        Monarch::Renderer::QuadData quad;
-        quad.color = glm::vec4(1, 0, 1, 1);
-        quad.size = glm::vec2(100, 100);
-        Monarch::Renderer::drawQuad(quad);
-    }
+    World(int width, int height);
 
-    virtual bool onEvent(Monarch::Event& e) override
-    {
-        return false;
-    }
+    virtual void init() override;
+    virtual void update() override;
+    virtual void draw() override; 
+
+    virtual bool onEvent(Monarch::Event& e) override;
+private:
+    int m_tileSize = 10;
+    std::vector<std::vector<Tile>> m_data;
+    BasicDungeonGenerator m_generator; 
 };

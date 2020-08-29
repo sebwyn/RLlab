@@ -48,7 +48,7 @@ void BasicDungeonGenerator::generate()
 
 void BasicDungeonGenerator::clearData()
 {
-    m_game->getWorld().clear();
+    m_worldData.clear();
     m_cells.clear();
 }
 
@@ -60,14 +60,14 @@ void BasicDungeonGenerator::clearData()
 void BasicDungeonGenerator::initCells()
 {
     for(int r = 0; r < m_wRows; r++){
-        m_game->getWorld().push_back(std::vector<Tile>());
+        m_worldData.push_back(std::vector<Tile>());
         if(r % 2 == 1) m_cells.push_back(std::vector<CellData>());
         for(int c = 0; c < m_wColumns; c++){
             if(r % 2 == 1 && c % 2 == 1){
-                m_game->getWorld().back().push_back(TileManager::floor);
+                m_worldData.back().push_back(TileManager::floor);
                 m_cells.back().push_back({false, -1});
             } else { 
-                m_game->getWorld().back().push_back(TileManager::wall);
+                m_worldData.back().push_back(TileManager::wall);
             }
         }
     }
@@ -88,7 +88,7 @@ void BasicDungeonGenerator::placeRoom(Room room)
         for(int c = topLeft.c; c < bottomRight.c; c++){
             if(r % 2 == 1 && c % 2 == 1)
                 *(getCell(convToMaze(Vec2(r, c)))) = {true, (int)m_rooms.size()};
-            m_game->getWorld()[r][c] = TileManager::floor;
+            m_worldData[r][c] = TileManager::floor;
         }
     }
 }

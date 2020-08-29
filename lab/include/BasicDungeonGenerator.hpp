@@ -14,8 +14,8 @@
 class BasicDungeonGenerator : public Component {
 public:
     //width and height in cells, a cell is surrounded by 8 wall characters
-    BasicDungeonGenerator(RoguelikeGame* game, int rows, int columns, int seed, int roomAttempts, int minRoomSize, int maxRoomSize) 
-     : m_game(game), 
+    BasicDungeonGenerator(std::vector<std::vector<Tile>>& worldData, int rows, int columns, int seed, int roomAttempts, int minRoomSize, int maxRoomSize) 
+     : m_worldData(worldData), 
        m_rows(rows), 
        m_columns(columns), 
        m_wRows(rows*2+1), 
@@ -33,7 +33,7 @@ public:
 
     Vec2 getSpawnPoint();
 private:
-    RoguelikeGame* m_game;
+    std::vector<std::vector<Tile>>& m_worldData;
     int m_rows, m_columns, m_wRows, m_wColumns, m_minRoomSize, m_maxRoomSize;
 
     std::default_random_engine m_generator;
@@ -90,7 +90,7 @@ private:
 
     inline Tile* getWorld(Vec2 cell, Vec2 offset = Vec2(0, 0)){
         Vec2 worldP = convToWorld(cell) + offset;
-        return &(m_game->getWorld()[worldP.r][worldP.c]);
+        return &(m_worldData[worldP.r][worldP.c]);
     }
     
     inline int convToWorld(int pos, bool aligned = true){

@@ -14,7 +14,7 @@ void LabWorldLayer::init()
 {
     Monarch::Entity& world = m_entities.addEntity();
     world.addComponent<Monarch::Transform>();
-    world.addComponent<World>();
+    world.addComponent<World>(50, 50);
 
     m_cameraEntity.addComponent<Monarch::Transform>();
     m_cameraEntity.addComponent<Monarch::CamController2D>();
