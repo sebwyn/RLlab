@@ -2,9 +2,15 @@
 
 #include "components/Transform.hpp"
 
-World::World(int width, int height)
- : m_generator(BasicDungeonGenerator(m_data, width, height, 894725, 100, 4, 7))
+World::World(int width, int height, int seed)
+ : m_generator(BasicDungeonGenerator(m_data, width, height, seed, 100, 4, 7))
 {
+}
+
+//returns a spawn point in world coords
+Vec2 World::getSpawnPoint()
+{
+    return m_generator.getSpawnPoint();
 }
 
 void World::init()

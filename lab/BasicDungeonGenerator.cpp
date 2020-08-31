@@ -1,14 +1,5 @@
 #include "BasicDungeonGenerator.hpp"
 
-void BasicDungeonGenerator::update(){
-}
-
-void BasicDungeonGenerator::handleInput(int key)
-{
-    switch(key){
-    }
-}
-
 /*
  * set the player spawn to be the upper left corner of the first room
  */
@@ -30,7 +21,7 @@ void BasicDungeonGenerator::generate()
     initCells();
     for(int i = 0; i < m_attempts; i++){
         Room room = {
-            Vec2(random(1, m_rows-1), random(1, m_columns-1)), 
+            Vec2(random(1, m_x-1), random(1, m_y-1)), 
             Vec2(random(m_minRoomSize, m_maxRoomSize),random(m_minRoomSize, m_maxRoomSize))
         }; 
         if(validateRoom(room)){
@@ -59,10 +50,10 @@ void BasicDungeonGenerator::clearData()
  */
 void BasicDungeonGenerator::initCells()
 {
-    for(int r = 0; r < m_wRows; r++){
+    for(int r = 0; r < m_wX; r++){
         m_worldData.push_back(std::vector<Tile>());
         if(r % 2 == 1) m_cells.push_back(std::vector<CellData>());
-        for(int c = 0; c < m_wColumns; c++){
+        for(int c = 0; c < m_wY; c++){
             if(r % 2 == 1 && c % 2 == 1){
                 m_worldData.back().push_back(TileManager::floor);
                 m_cells.back().push_back({false, -1});
@@ -82,10 +73,10 @@ void BasicDungeonGenerator::placeRoom(Room room)
 {
     //iterate over the inside of the room in world space clearing it out
     //and if the current pos in world space is a cell, make it visited
-    Vec2 topLeft = convToWorld(Vec2(room.pos.r, room.pos.c));
-    Vec2 bottomRight = topLeft + convToWorld(Vec2(room.size.r-1, room.size.c-1)); 
-    for(int r = topLeft.r; r < bottomRight.r; r++){
-        for(int c = topLeft.c; c < bottomRight.c; c++){
+    Vec2 topLeft = convToWorld(Vec2(room.pos.x, room.pos.y));
+    Vec2 bottomRight = topLeft + convToWorld(Vec2(room.size.x-1, room.size.y-1)); 
+    for(int r = topLeft.x; r < bottomRight.x; r++){
+        for(int c = topLeft.y; c < bottomRight.y; c++){
             if(r % 2 == 1 && c % 2 == 1)
                 *(getCell(convToMaze(Vec2(r, c)))) = {true, (int)m_rooms.size()};
             m_worldData[r][c] = TileManager::floor;
@@ -99,18 +90,18 @@ bool BasicDungeonGenerator::validateRoom(Room room)
     Vec2 roomStart = room.pos;
     Vec2 roomExtent = roomStart + room.size;
     //check to make sure the room is in the world bounds
-    if(!(0 < roomStart.r && roomExtent.r < m_rows 
-    &&   0 < roomStart.c && roomExtent.c < m_columns))
+    if(!(0 < roomStart.x && roomExtent.x < m_x 
+    &&   0 < roomStart.y && roomExtent.y < m_y))
         return false;
 
     //check to make sure the room doesn't collide with any other rooms
     for(Room r : m_rooms){
         Vec2 otherStart = r.pos;
         Vec2 otherExtent = otherStart + r.size;
-        if((otherStart.r <= room.pos.r && room.pos.r < otherExtent.r) 
-        || (roomStart.r <= otherStart.r && otherStart.r < roomExtent.r)){
-            if((otherStart.c <= roomStart.c && roomStart.c < otherExtent.c) 
-            || (roomStart.c <= otherStart.c && otherStart.c < roomExtent.c)){
+        if((otherStart.x <= room.pos.x && room.pos.x < otherExtent.x) 
+        || (roomStart.x <= otherStart.x && otherStart.x < roomExtent.x)){
+            if((otherStart.y <= roomStart.y && roomStart.y < otherExtent.y) 
+            || (roomStart.y <= otherStart.y && otherStart.y < roomExtent.y)){
                 return false;
             }
         }
@@ -178,8 +169,8 @@ void BasicDungeonGenerator::exploreMaze()
     std::vector<ExplorationNode*> deadEnds;
     
     //naively search through cells until we find an entrance
-    for(int r = 0; r < m_rows; r++){
-        for(int c = 0; c < m_columns; c++){
+    for(int r = 0; r < m_x; r++){
+        for(int c = 0; c < m_y; c++){
             if(getCell(Vec2(r, c))->entrance)
                 root = new ExplorationNode(Vec2(r, c), Vec2(0, 0), nullptr);
         } 
@@ -244,29 +235,29 @@ void BasicDungeonGenerator::makeDoors(Room currentRoom, int numOfDoors)
         switch(random(0, 3)){
             case 0:
                 inConn = {
-                    currentRoom.pos.r,
-                    currentRoom.pos.c + random(0, currentRoom.size.c-1)
+                    currentRoom.pos.x,
+                    currentRoom.pos.y + random(0, currentRoom.size.y-1)
                 };
                 direction = north;
                 break;
             case 1:
                 inConn = {
-                    currentRoom.pos.r + random(0, currentRoom.size.r-1),
-                    currentRoom.pos.c + currentRoom.size.c-1
+                    currentRoom.pos.x + random(0, currentRoom.size.x-1),
+                    currentRoom.pos.y + currentRoom.size.y-1
                 };
                 direction = east;
                 break;
             case 2:
                 inConn = {
-                    currentRoom.pos.r + currentRoom.size.r-1,
-                    currentRoom.pos.c + random(0, currentRoom.size.c-1)
+                    currentRoom.pos.x + currentRoom.size.x-1,
+                    currentRoom.pos.y + random(0, currentRoom.size.y-1)
                 };
                 direction = south;
                 break;
             case 3:
                 inConn = {
-                    currentRoom.pos.r + random(0, currentRoom.size.r-1),
-                    currentRoom.pos.c
+                    currentRoom.pos.x + random(0, currentRoom.size.x-1),
+                    currentRoom.pos.y
                 };
                 direction = west;
                 break;

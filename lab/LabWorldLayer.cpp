@@ -4,6 +4,7 @@
 #include "components/2d/CamController2D.hpp"
 
 #include "components/World.hpp"
+#include "components/Player.hpp"
 
 LabWorldLayer::LabWorldLayer(int winWidth, int winHeight)
  : winWidth(winWidth),
@@ -14,7 +15,11 @@ void LabWorldLayer::init()
 {
     Monarch::Entity& world = m_entities.addEntity();
     world.addComponent<Monarch::Transform>();
-    world.addComponent<World>(50, 50);
+    World& w = world.addComponent<World>(50, 50, 1337);
+
+    Monarch::Entity& player = m_entities.addEntity();
+    player.addComponent<Monarch::Transform>();
+    player.addComponent<Player>(w, w.getSpawnPoint());
 
     m_cameraEntity.addComponent<Monarch::Transform>();
     m_cameraEntity.addComponent<Monarch::CamController2D>();
