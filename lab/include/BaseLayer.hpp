@@ -11,11 +11,12 @@ private:
 
     Monarch::Entity& m_camera;
 public:
-    BaseLayer()
+    BaseLayer(int initWidth, int initHeight)
      : m_camera(m_manager.addEntity())
     {
         Monarch::Transform& transform = m_camera.addComponent<Monarch::Transform>();
-        Monarch::Camera& cam = m_camera.addComponent<Monarch::Camera>();
+        Monarch::Camera& cam = 
+            m_camera.addComponent<Monarch::Camera>(initWidth, initHeight);
 
         //make some basic camera settings, because this this is a 2d application
         //so we can assume some things

@@ -14,5 +14,5 @@ public:
 private:
     static int initWidth, initHeight;
 
-    BaseLayer ui, world;
+    std::shared_ptr<BaseLayer> m_ui, m_world;
 };
