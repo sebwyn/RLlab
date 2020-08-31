@@ -9,5 +9,5 @@ LabApp::LabApp()
  : Monarch::Application("RLLab", LabApp::initWidth, LabApp::initHeight)
 {
     window->enableCursor();
-    layers.pushLayer<LabWorldLayer>(LabApp::initWidth, LabApp::initHeight);
+
 }

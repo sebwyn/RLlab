@@ -2,6 +2,8 @@
 
 #include "Monarch.hpp"
 
+#include "BaseLayer.hpp"
+
 class LabApp : public Monarch::Application {
 public:
     LabApp();
@@ -11,4 +13,6 @@ public:
     virtual void update() override {}
 private:
     static int initWidth, initHeight;
+
+    BaseLayer ui, world;
 };
